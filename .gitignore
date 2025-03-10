@@ -20,7 +20,8 @@ CMakeUserPresets.json
 *.s
 *.ld
 
-Core/*
-!Core/Src
-Core/Src/*
-!Core/Src/main.c
+hardware/*/Core/*
+!hardware/*/Core/Src
+hardware/*/Core/Src/*
+!hardware/*/Core/Src/main.c
+!hardware/*/Core/Src/system_stm32f1xx.c
