@@ -40,7 +40,7 @@
 #define __COMMON_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal.h"
+#include "hardware.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -60,9 +60,9 @@
 #define CONVERTHEX(c)       (IS_09(c) ? ((c) - '0') : CONVERTHEX_ALPHA(c))
 
 /* Exported functions ------------------------------------------------------- */
-void Int2Str(uint8_t *p_str, uint32_t intnum);
+void Int2Str(char *p_str, uint32_t intnum);
 uint32_t Str2Int(uint8_t *inputstr, uint32_t *intnum);
-void Serial_PutString(uint8_t *p_string);
+void Serial_PutString(char *p_string);
 HAL_StatusTypeDef Serial_PutByte(uint8_t param);
 
 #define UartHandle huart1

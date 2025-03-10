@@ -44,7 +44,7 @@
 #include "ymodem.h"
 
 /* Imported variables --------------------------------------------------------*/
-extern uint8_t aFileName[FILE_NAME_LENGTH];
+extern char aFileName[FILE_NAME_LENGTH];
 
 /* Private variables ---------------------------------------------------------*/
 typedef  void (*pFunction)(void);

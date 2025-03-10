@@ -59,7 +59,7 @@
 pFunction JumpToApplication;
 uint32_t JumpAddress;
 uint32_t FlashProtection = 0;
-uint8_t aFileName[FILE_NAME_LENGTH];
+char aFileName[FILE_NAME_LENGTH];
 
 /* Private function prototypes -----------------------------------------------*/
 void SerialDownload(void);
@@ -74,7 +74,7 @@ void SerialUpload(void);
   */
 void SerialDownload(void)
 {
-  uint8_t number[11] = {0};
+  char number[11] = {0};
   uint32_t size = 0;
   COM_StatusTypeDef result;
 
@@ -180,13 +180,17 @@ void Main_Menu(void)
     __HAL_UART_FLUSH_DRREGISTER(&UartHandle);
 	
     /* Receive key */
-    HAL_UART_Receive(&UartHandle, &key, 1, RX_TIMEOUT);
+    //HAL_UART_Receive(&UartHandle, &key, 1, RX_TIMEOUT);
+    key = '1';
 
     switch (key)
     {
     case '1' :
       /* Download user application in the Flash */
       SerialDownload();
+      uint32_t tmp=0;
+      FLASH_If_Write(FLASH_UPGRADE_FLAG_ADDR, &tmp, 1);
+      HAL_NVIC_SystemReset();
       break;
     case '2' :
       /* Upload user application from the Flash */

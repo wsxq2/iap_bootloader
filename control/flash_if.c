@@ -61,7 +61,11 @@ void FLASH_If_Init(void)
   HAL_FLASH_Unlock();
 
   /* Clear all FLASH flags */
+#ifdef YS_BOARD
+  __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_PGSERR | FLASH_FLAG_WRPERR);
+#else
   __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_PGERR | FLASH_FLAG_WRPERR);
+#endif
   /* Unlock the Program memory */
   HAL_FLASH_Lock();
 }
@@ -82,6 +86,13 @@ uint32_t FLASH_If_Erase(uint32_t start)
   /* Unlock the Flash to enable the flash control register access *************/ 
   HAL_FLASH_Unlock();
 
+#ifdef YS_BOARD
+  NbrOfPages = (USER_FLASH_END_ADDRESS - start)/FLASH_SECTOR_SIZE;
+  pEraseInit.TypeErase = FLASH_TYPEERASE_SECTORS;
+  pEraseInit.Sector = start;
+  pEraseInit.Banks = FLASH_BANK_1;
+  pEraseInit.NbSectors = NbrOfPages;
+#else
   /* Get the sector where start the user flash area */
   NbrOfPages = (USER_FLASH_END_ADDRESS - start)/FLASH_PAGE_SIZE;
 
@@ -89,6 +100,7 @@ uint32_t FLASH_If_Erase(uint32_t start)
   pEraseInit.PageAddress = start;
   pEraseInit.Banks = FLASH_BANK_1;
   pEraseInit.NbPages = NbrOfPages;
+#endif
   status = HAL_FLASHEx_Erase(&pEraseInit, &PageError);
 
   /* Lock the Flash to disable the flash control register access (recommended
@@ -118,15 +130,49 @@ uint32_t FLASH_If_Erase(uint32_t start)
 uint32_t FLASH_If_Write(uint32_t destination, uint32_t *p_source, uint32_t length)
 {
   uint32_t i = 0;
+  const size_t bytes = sizeof(uint32_t)*FLASH_NB_32BITWORD_IN_FLASHWORD;
 
   /* Unlock the Flash to enable the flash control register access *************/
   HAL_FLASH_Unlock();
 
+#ifdef YS_BOARD
+#include <string.h>
+  uint32_t tmp[FLASH_NB_32BITWORD_IN_FLASHWORD]={0};
+  if(length % FLASH_NB_32BITWORD_IN_FLASHWORD != 0) {
+      if(length / FLASH_NB_32BITWORD_IN_FLASHWORD == 0) {
+          memcpy(tmp, p_source, length);
+          length = FLASH_NB_32BITWORD_IN_FLASHWORD;
+          p_source = tmp;
+      } else {
+          return FLASHIF_WRITING_ERROR;
+      }
+  }
+  for (i = 0; (i < length/FLASH_NB_32BITWORD_IN_FLASHWORD) && (destination <= (USER_FLASH_END_ADDRESS-bytes)); i++)
+  {
+    if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, destination, (uint32_t)(p_source)) == HAL_OK)
+    {
+     /* Check the written value */
+        if (memcmp((void*)destination, (void*)p_source, bytes)!=0)
+      {
+        /* Flash content doesn't match SRAM content */
+        return(FLASHIF_WRITINGCTRL_ERROR);
+      }
+      /* Increment FLASH destination address */
+      destination += bytes;
+      p_source += FLASH_NB_32BITWORD_IN_FLASHWORD;
+    }
+    else
+    {
+      /* Error occurred while writing data in Flash memory */
+      return (FLASHIF_WRITING_ERROR);
+    }
+  }
+#else
   for (i = 0; (i < length) && (destination <= (USER_FLASH_END_ADDRESS-4)); i++)
   {
     /* Device voltage range supposed to be [2.7V to 3.6V], the operation will
        be done by word */ 
-    if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, destination, *(uint32_t*)(p_source+i)) == HAL_OK)      
+    if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, destination, *(uint32_t*)(p_source+i)) == HAL_OK)
     {
      /* Check the written value */
       if (*(uint32_t*)destination != *(uint32_t*)(p_source+i))
@@ -143,6 +189,7 @@ uint32_t FLASH_If_Write(uint32_t destination, uint32_t *p_source, uint32_t lengt
       return (FLASHIF_WRITING_ERROR);
     }
   }
+#endif
 
   /* Lock the Flash to disable the flash control register access (recommended
      to protect the FLASH memory against possible unwanted operation) *********/
@@ -174,7 +221,11 @@ uint32_t FLASH_If_GetWriteProtectionStatus(void)
   HAL_FLASH_Lock();
 
   /* Get pages already write protected ****************************************/
+#ifdef YS_BOARD
+  ProtectedPAGE = ~(OptionsBytesStruct.WRPSector) & FLASH_PAGE_TO_BE_PROTECTED;
+#else
   ProtectedPAGE = ~(OptionsBytesStruct.WRPPage) & FLASH_PAGE_TO_BE_PROTECTED;
+#endif
 
   /* Check if desired pages are already write protected ***********************/
   if(ProtectedPAGE != 0)
@@ -214,7 +265,11 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
   config_new.RDPLevel = OB_RDP_LEVEL_0;
   config_new.USERConfig = config_old.USERConfig;  
   /* Get pages already write protected ****************************************/
+#ifdef YS_BOARD
+  ProtectedPAGE = config_old.WRPSector | FLASH_PAGE_TO_BE_PROTECTED;
+#else
   ProtectedPAGE = config_old.WRPPage | FLASH_PAGE_TO_BE_PROTECTED;
+#endif
 
   /* Unlock the Flash to enable the flash control register access *************/ 
   HAL_FLASH_Unlock();
@@ -223,13 +278,18 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
   HAL_FLASH_OB_Unlock();
   
   /* Erase all the option Bytes ***********************************************/
+#ifdef YS_BOARD
+    config_new.WRPSector    = ProtectedPAGE;
+    result = HAL_FLASHEx_OBProgram(&config_new);
+#else
   result = HAL_FLASHEx_OBErase();
-    
+
   if (result == HAL_OK)
   {
     config_new.WRPPage    = ProtectedPAGE;
     result = HAL_FLASHEx_OBProgram(&config_new);
   }
+#endif
   
   return (result == HAL_OK ? FLASHIF_OK: FLASHIF_PROTECTION_ERRROR);
 }

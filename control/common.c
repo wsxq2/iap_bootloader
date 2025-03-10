@@ -56,7 +56,7 @@
   * @param  intnum: The integer to be converted
   * @retval None
   */
-void Int2Str(uint8_t *p_str, uint32_t intnum)
+void Int2Str(char *p_str, uint32_t intnum)
 {
   uint32_t i, divider = 1000000000, pos = 0, status = 0;
 
@@ -158,7 +158,7 @@ uint32_t Str2Int(uint8_t *p_inputstr, uint32_t *p_intnum)
   * @param  p_string: The string to be printed
   * @retval None
   */
-void Serial_PutString(uint8_t *p_string)
+void Serial_PutString(char *p_string)
 {
   uint16_t length = 0;
 
@@ -166,7 +166,7 @@ void Serial_PutString(uint8_t *p_string)
   {
     length++;
   }
-  HAL_UART_Transmit(&UartHandle, p_string, length, TX_TIMEOUT);
+  HAL_UART_Transmit(&UartHandle, (uint8_t*)p_string, length, TX_TIMEOUT);
 }
 
 /**

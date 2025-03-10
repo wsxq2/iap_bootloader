@@ -40,7 +40,7 @@
 #define __FLASH_IF_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal.h"
+#include "hardware.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -70,22 +70,40 @@ enum {
 	FLASHIF_WRP_DISABLE
 };
 
+#ifdef YS_BOARD
+#define FLASH_PAGE_STEP         FLASH_SECTOR_SIZE
+#define APPLICATION_ADDRESS     ((uint32_t)(FLASH_BASE + FLASH_SECTOR_SIZE))
+#define USER_FLASH_END_ADDRESS        ((uint32_t)(FLASH_BASE + FLASH_BANK_SIZE))
+#define USER_FLASH_SIZE               ((uint32_t)FLASH_BANK_SIZE - FLASH_SECTOR_SIZE)
+#else
 /* Define the address from where user application will be loaded.
    Note: this area is reserved for the IAP code                  */
 #define FLASH_PAGE_STEP         FLASH_PAGE_SIZE           /* Size of page : 2 Kbytes */
-#define APPLICATION_ADDRESS     (uint32_t)0x08000000      /* Start user code address: ADDR_FLASH_PAGE_8 */
+#define APPLICATION_ADDRESS     (uint32_t)0x08004000      /* Start user code address: ADDR_FLASH_PAGE_8 */
 
 /* Notable Flash addresses */
-#define USER_FLASH_END_ADDRESS        0x0800C000
+#define USER_FLASH_END_ADDRESS        0x08010000
 
 /* Define the user application size */
 #define USER_FLASH_SIZE               ((uint32_t)0x0000C000) /* Small default template application */
+#endif
 
 /* Define bitmap representing user flash area that could be write protected (check restricted to pages 8-39). */
 
+#ifdef YS_BOARD
+#define FLASH_PAGE_TO_BE_PROTECTED (OB_WRP_SECTOR_1 | OB_WRP_SECTOR_2 | OB_WRP_SECTOR_3 | \
+                                       OB_WRP_SECTOR_4 | OB_WRP_SECTOR_5 | OB_WRP_SECTOR_6 | OB_WRP_SECTOR_7)
+#else
 #define FLASH_PAGE_TO_BE_PROTECTED (OB_WRP_PAGES16TO19 | OB_WRP_PAGES20TO23 | OB_WRP_PAGES24TO27 | OB_WRP_PAGES28TO31 | \
                                        OB_WRP_PAGES32TO35 | OB_WRP_PAGES36TO39 | OB_WRP_PAGES40TO43 | OB_WRP_PAGES44TO47 )
+#endif
 
+#ifdef YS_BOARD
+#define FLASH_UPGRADE_FLAG_ADDR ((uint32_t)FLASH_BANK2_BASE)
+#else
+#define FLASH_UPGRADE_FLAG_ADDR ((uint32_t)0x08003C00)
+#endif
+#define FLASH_UPGRADE_FLAG_VALUE ((uint32_t)0x55AA55AA)
 
 /* Exported macro ------------------------------------------------------------*/
 /* ABSoulute value */

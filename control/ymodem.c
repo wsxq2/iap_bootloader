@@ -31,8 +31,6 @@
 #include "flash_if.h"
 #include "common.h"
 #include "ymodem.h"
-#include "string.h"
-#include "main.h"
 #include "menu.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -150,7 +148,7 @@ static HAL_StatusTypeDef ReceivePacket(uint8_t *p_data, uint32_t *p_length, uint
 static void PrepareIntialPacket(uint8_t *p_data, const uint8_t *p_file_name, uint32_t length)
 {
   uint32_t i, j = 0;
-  uint8_t astring[10];
+  char astring[10];
 
   /* first 3 bytes are constant */
   p_data[PACKET_START_INDEX] = SOH;
