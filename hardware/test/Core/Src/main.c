@@ -94,22 +94,7 @@ int main(void)
 
   /* Initialise Flash */
   FLASH_If_Init();
-  Serial_PutString("enter bootloader\n");
-  uint32_t tmp = *(__IO uint32_t*) (FLASH_UPGRADE_FLAG_ADDR);
-  if(tmp == FLASH_UPGRADE_FLAG_VALUE) {
-      /* Display main menu */
-      Main_Menu ();
-  } else {
-      static pFunction JumpToApplication;
-      static uint32_t JumpAddress;
-      /* execute the new program */
-      JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
-      /* Jump to user application */
-      JumpToApplication = (pFunction) JumpAddress;
-      /* Initialize user application's Stack Pointer */
-      __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
-      JumpToApplication();
-  }
+  Main_Menu();
 
   /* USER CODE END 2 */
 

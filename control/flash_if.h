@@ -53,7 +53,8 @@ enum
   FLASHIF_ERASEKO,
   FLASHIF_WRITINGCTRL_ERROR,
   FLASHIF_WRITING_ERROR,
-  FLASHIF_PROTECTION_ERRROR
+  FLASHIF_PROTECTION_ERRROR,
+	FLASHIF_WRITING_NOT_ALIGN8_ERRROR
 };
 
 /* protection type */  
@@ -73,19 +74,19 @@ enum {
 #ifdef YS_BOARD
 #define FLASH_PAGE_STEP         FLASH_SECTOR_SIZE
 #define APPLICATION_ADDRESS     ((uint32_t)(FLASH_BASE + FLASH_SECTOR_SIZE))
-#define USER_FLASH_END_ADDRESS        ((uint32_t)(FLASH_BASE + FLASH_BANK_SIZE))
-#define USER_FLASH_SIZE               ((uint32_t)FLASH_BANK_SIZE - FLASH_SECTOR_SIZE)
+#define USER_FLASH_END_ADDRESS        ((uint32_t)(APPLICATION_ADDRESS + FLASH_SECTOR_SIZE))
+#define USER_FLASH_SIZE               ((uint32_t)USER_FLASH_END_ADDRESS - APPLICATION_ADDRESS)
 #else
 /* Define the address from where user application will be loaded.
    Note: this area is reserved for the IAP code                  */
-#define FLASH_PAGE_STEP         FLASH_PAGE_SIZE           /* Size of page : 2 Kbytes */
-#define APPLICATION_ADDRESS     (uint32_t)0x08004000      /* Start user code address: ADDR_FLASH_PAGE_8 */
+#define FLASH_PAGE_STEP         FLASH_PAGE_SIZE           /* Size of page : 1 Kbytes */
+#define APPLICATION_ADDRESS     ((uint32_t)(FLASH_BASE + 0x4000))      // 16Kbytes offset
 
 /* Notable Flash addresses */
-#define USER_FLASH_END_ADDRESS        0x08010000
+#define USER_FLASH_END_ADDRESS        ((uint32_t)(FLASH_BASE + 0x10000)) // 64Kbytes offset
 
 /* Define the user application size */
-#define USER_FLASH_SIZE               ((uint32_t)0x0000C000) /* Small default template application */
+#define USER_FLASH_SIZE               ((uint32_t)0x10000 - 0x4000) // 48Kbytes
 #endif
 
 /* Define bitmap representing user flash area that could be write protected (check restricted to pages 8-39). */

@@ -60,6 +60,8 @@ pFunction JumpToApplication;
 uint32_t JumpAddress;
 uint32_t FlashProtection = 0;
 char aFileName[FILE_NAME_LENGTH];
+// uint32_t g_ret;
+// uint32_t g_length;
 
 /* Private function prototypes -----------------------------------------------*/
 void SerialDownload(void);
@@ -96,7 +98,16 @@ void SerialDownload(void)
   }
   else if (result == COM_DATA)
   {
-    Serial_PutString("\n\n\rVerification failed!\n\r");
+    Serial_PutString("\n\n\rVerification failed!error code is: ");
+//       char str[11]={0};
+//       Int2Str(str, g_ret);
+//     Serial_PutString(str);
+//     Serial_PutString("    length is: ");
+// #include <string.h>
+//       memset(str, 0, sizeof(str));
+//       Int2Str(str, g_length);
+//     Serial_PutString(str);
+//     Serial_PutString("\n");
   }
   else if (result == COM_ABORT)
   {
@@ -180,8 +191,14 @@ void Main_Menu(void)
     __HAL_UART_FLUSH_DRREGISTER(&UartHandle);
 	
     /* Receive key */
-    //HAL_UART_Receive(&UartHandle, &key, 1, RX_TIMEOUT);
-    key = '1';
+    HAL_UART_Receive(&UartHandle, &key, 1, RX_TIMEOUT);
+
+  // uint32_t tmp = *(__IO uint32_t*) (FLASH_UPGRADE_FLAG_ADDR);
+  // if(tmp == FLASH_UPGRADE_FLAG_VALUE) {
+  //     key = '1';
+  // } else {
+  //     key = '3';
+  // }
 
     switch (key)
     {

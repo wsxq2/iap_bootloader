@@ -89,7 +89,7 @@ uint32_t FLASH_If_Erase(uint32_t start)
 #ifdef YS_BOARD
   NbrOfPages = (USER_FLASH_END_ADDRESS - start)/FLASH_SECTOR_SIZE;
   pEraseInit.TypeErase = FLASH_TYPEERASE_SECTORS;
-  pEraseInit.Sector = start;
+  pEraseInit.Sector = (start - FLASH_BASE)/FLASH_SECTOR_SIZE;
   pEraseInit.Banks = FLASH_BANK_1;
   pEraseInit.NbSectors = NbrOfPages;
 #else
@@ -130,13 +130,13 @@ uint32_t FLASH_If_Erase(uint32_t start)
 uint32_t FLASH_If_Write(uint32_t destination, uint32_t *p_source, uint32_t length)
 {
   uint32_t i = 0;
-  const size_t bytes = sizeof(uint32_t)*FLASH_NB_32BITWORD_IN_FLASHWORD;
 
   /* Unlock the Flash to enable the flash control register access *************/
   HAL_FLASH_Unlock();
 
 #ifdef YS_BOARD
 #include <string.h>
+  const size_t bytes = sizeof(uint32_t)*FLASH_NB_32BITWORD_IN_FLASHWORD;
   uint32_t tmp[FLASH_NB_32BITWORD_IN_FLASHWORD]={0};
   if(length % FLASH_NB_32BITWORD_IN_FLASHWORD != 0) {
       if(length / FLASH_NB_32BITWORD_IN_FLASHWORD == 0) {
@@ -144,7 +144,7 @@ uint32_t FLASH_If_Write(uint32_t destination, uint32_t *p_source, uint32_t lengt
           length = FLASH_NB_32BITWORD_IN_FLASHWORD;
           p_source = tmp;
       } else {
-          return FLASHIF_WRITING_ERROR;
+          return FLASHIF_WRITING_NOT_ALIGN8_ERRROR;
       }
   }
   for (i = 0; (i < length/FLASH_NB_32BITWORD_IN_FLASHWORD) && (destination <= (USER_FLASH_END_ADDRESS-bytes)); i++)

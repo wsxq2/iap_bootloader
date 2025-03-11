@@ -387,7 +387,8 @@ COM_StatusTypeDef Ymodem_Receive ( uint32_t *p_size )
                   ramsource = (uint32_t) & aPacketData[PACKET_DATA_INDEX];
 
                   /* Write received data in Flash */
-                  if (FLASH_If_Write(flashdestination, (uint32_t*) ramsource, packet_length/4) == FLASHIF_OK)                   
+                  uint32_t ret = FLASH_If_Write(flashdestination, (uint32_t*) ramsource, packet_length/4);
+                  if (ret == FLASHIF_OK)
                   {
                     flashdestination += packet_length;
                     Serial_PutByte(ACK);
@@ -398,6 +399,10 @@ COM_StatusTypeDef Ymodem_Receive ( uint32_t *p_size )
                     Serial_PutByte(CA);
                     Serial_PutByte(CA);
                     result = COM_DATA;
+                    // extern uint32_t g_ret;
+                    // extern uint32_t g_length;
+                    // g_ret= ret;
+                    // g_length = packet_length/4;
                   }
                 }
                 packets_received ++;
