@@ -210,10 +210,14 @@ uint32_t FLASH_If_Write(uint32_t destination, uint32_t *p_source, uint32_t lengt
 uint32_t FLASH_If_GetWriteProtectionStatus(void)
 {
   uint32_t ProtectedPAGE = FLASHIF_PROTECTION_NONE;
-  FLASH_OBProgramInitTypeDef OptionsBytesStruct;
+    FLASH_OBProgramInitTypeDef OptionsBytesStruct={0};
 
   /* Unlock the Flash to enable the flash control register access *************/
   HAL_FLASH_Unlock();
+
+#ifdef YS_BOARD
+  OptionsBytesStruct.Banks = FLASH_BANK_1;
+#endif
 
   /* Check if there are write protected sectors inside the user flash area ****/
   HAL_FLASHEx_OBGetConfig(&OptionsBytesStruct);
@@ -224,11 +228,11 @@ uint32_t FLASH_If_GetWriteProtectionStatus(void)
 
   /* Get pages already write protected ****************************************/
 #ifdef YS_BOARD
-  ProtectedPAGE = ~(OptionsBytesStruct.WRPSector) & FLASH_PAGE_TO_BE_PROTECTED;
+  ProtectedPAGE = (OptionsBytesStruct.WRPSector) & FLASH_PAGE_TO_BE_PROTECTED;
 #else
   ProtectedPAGE = ~(OptionsBytesStruct.WRPPage) & FLASH_PAGE_TO_BE_PROTECTED;
 #endif
-  _dbg_printf("%s:%d:  ProtectedPAGE=%X\n", __func__, __LINE__, ProtectedPAGE);
+  _dbg_printf("%s:%d:  WRPSector=%X, ProtectedPAGE=%X\n", __func__, __LINE__, OptionsBytesStruct.WRPSector, ProtectedPAGE);
 
   /* Check if desired pages are already write protected ***********************/
   if(ProtectedPAGE != 0)
@@ -254,6 +258,9 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
   FLASH_OBProgramInitTypeDef config_new, config_old;
   HAL_StatusTypeDef result = HAL_OK;
   
+#ifdef YS_BOARD
+  config_old.Banks = FLASH_BANK_1;
+#endif
 
   /* Get pages write protection status ****************************************/
   HAL_FLASHEx_OBGetConfig(&config_old);
@@ -269,11 +276,11 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
   config_new.USERConfig = config_old.USERConfig;  
   /* Get pages already write protected ****************************************/
 #ifdef YS_BOARD
-  ProtectedPAGE = config_old.WRPSector | FLASH_PAGE_TO_BE_PROTECTED;
+  ProtectedPAGE = FLASH_PAGE_TO_BE_PROTECTED;
 #else
   ProtectedPAGE = config_old.WRPPage | FLASH_PAGE_TO_BE_PROTECTED;
 #endif
-  _dbg_printf("%s:%d:  ProtectedPAGE=%X\n", __func__, __LINE__, ProtectedPAGE);
+  _dbg_printf("%s:%d:  WRPSector=%X, ProtectedPAGE=%X\n", __func__, __LINE__, config_old.WRPSector, ProtectedPAGE);
 
   /* Unlock the Flash to enable the flash control register access *************/ 
   HAL_FLASH_Unlock();
@@ -284,6 +291,7 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
   /* Erase all the option Bytes ***********************************************/
 #ifdef YS_BOARD
     config_new.WRPSector    = ProtectedPAGE;
+  config_new.Banks = FLASH_BANK_1;
     result = HAL_FLASHEx_OBProgram(&config_new);
 #else
   result = HAL_FLASHEx_OBErase();
@@ -295,6 +303,7 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
   }
 #endif
 
+    HAL_FLASH_OB_Launch();
     HAL_FLASH_OB_Lock();
     HAL_FLASH_Lock();
   

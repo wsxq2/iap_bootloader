@@ -229,6 +229,8 @@ void Main_Menu(void)
     if(!skip_key) {
         /* Receive key */
         HAL_UART_Receive(&UartHandle, &key, 1, RX_TIMEOUT);
+    } else {
+        skip_key = 0;
     }
 
     switch (key)
@@ -255,7 +257,7 @@ void Main_Menu(void)
       SerialUpload();
       break;
     case '3' :
-        modify_stack_pointer_and_start_app(APPLICATION_ADDRESS, APPLICATION_ADDRESS -4);
+        modify_stack_pointer_and_start_app(APPLICATION_ADDRESS, APPLICATION_ADDRESS+4);
       break;
     case '4' :
       if (FlashProtection != FLASHIF_PROTECTION_NONE)
@@ -263,10 +265,8 @@ void Main_Menu(void)
         /* Disable the write protection */
         if (FLASH_If_WriteProtectionConfig(FLASHIF_WRP_DISABLE) == FLASHIF_OK)
         {
-          Serial_PutString("Write Protection disabled...\r\n");
-          Serial_PutString("System will now restart...\r\n");
-          /* Launch the option byte loading */
-          HAL_FLASH_OB_Launch();
+          Serial_PutString("Write Protection disabled...will reboot\r\n");
+            HAL_NVIC_SystemReset(); //reboot
         }
         else
         {
@@ -277,10 +277,8 @@ void Main_Menu(void)
       {
         if (FLASH_If_WriteProtectionConfig(FLASHIF_WRP_ENABLE) == FLASHIF_OK)
         {
-          Serial_PutString("Write Protection enabled...\r\n");
-          Serial_PutString("System will now restart...\r\n");
-          /* Launch the option byte loading */
-          HAL_FLASH_OB_Launch();
+          Serial_PutString("Write Protection enabled...will reboot\r\n");
+            HAL_NVIC_SystemReset(); //reboot
         }
         else
         {
