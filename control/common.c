@@ -42,6 +42,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "common.h"
 #include "main.h"
+#include <stdarg.h>
+#include <stdio.h>
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -182,6 +184,21 @@ HAL_StatusTypeDef Serial_PutByte( uint8_t param )
     UartHandle.gState = HAL_UART_STATE_READY;
   }
   return HAL_UART_Transmit(&UartHandle, &param, 1, TX_TIMEOUT);
+}
+
+void _dbg_printf(const char *format,...)
+{
+    char _dbg_tx_buff[DP_TXBUFF_LEN];
+    uint32_t length;
+    va_list args;
+
+    va_start(args, format);
+    length = vsnprintf((char*)_dbg_tx_buff, DP_TXBUFF_LEN, (char*)format, args);
+    va_end(args);
+
+    length = (length>DP_TXBUFF_LEN? DP_TXBUFF_LEN:length);
+
+    HAL_UART_Transmit(&huart1, (const uint8_t*)_dbg_tx_buff,length, HAL_MAX_DELAY);
 }
 /**
   * @}

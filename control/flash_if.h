@@ -100,7 +100,7 @@ enum {
 #endif
 
 #ifdef YS_BOARD
-#define FLASH_UPGRADE_FLAG_ADDR ((uint32_t)FLASH_BANK2_BASE)
+#define FLASH_UPGRADE_FLAG_ADDR ((uint32_t)FLASH_BANK1_BASE + FLASH_SECTOR_SIZE * 7)
 #else
 #define FLASH_UPGRADE_FLAG_ADDR ((uint32_t)0x08003C00)
 #endif

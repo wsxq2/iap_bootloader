@@ -41,6 +41,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "flash_if.h"
+#include "common.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -92,6 +93,7 @@ uint32_t FLASH_If_Erase(uint32_t start)
   pEraseInit.Sector = (start - FLASH_BASE)/FLASH_SECTOR_SIZE;
   pEraseInit.Banks = FLASH_BANK_1;
   pEraseInit.NbSectors = NbrOfPages;
+  pEraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;
 #else
   /* Get the sector where start the user flash area */
   NbrOfPages = (USER_FLASH_END_ADDRESS - start)/FLASH_PAGE_SIZE;
@@ -226,6 +228,7 @@ uint32_t FLASH_If_GetWriteProtectionStatus(void)
 #else
   ProtectedPAGE = ~(OptionsBytesStruct.WRPPage) & FLASH_PAGE_TO_BE_PROTECTED;
 #endif
+  _dbg_printf("%s:%d:  ProtectedPAGE=%X\n", __func__, __LINE__, ProtectedPAGE);
 
   /* Check if desired pages are already write protected ***********************/
   if(ProtectedPAGE != 0)
@@ -270,6 +273,7 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
 #else
   ProtectedPAGE = config_old.WRPPage | FLASH_PAGE_TO_BE_PROTECTED;
 #endif
+  _dbg_printf("%s:%d:  ProtectedPAGE=%X\n", __func__, __LINE__, ProtectedPAGE);
 
   /* Unlock the Flash to enable the flash control register access *************/ 
   HAL_FLASH_Unlock();
@@ -290,6 +294,9 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
     result = HAL_FLASHEx_OBProgram(&config_new);
   }
 #endif
+
+    HAL_FLASH_OB_Lock();
+    HAL_FLASH_Lock();
   
   return (result == HAL_OK ? FLASHIF_OK: FLASHIF_PROTECTION_ERRROR);
 }

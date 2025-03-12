@@ -46,7 +46,6 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 #include "common.h"
 #include "flash_if.h"
 #include "menu.h"
@@ -60,11 +59,9 @@ pFunction JumpToApplication;
 uint32_t JumpAddress;
 uint32_t FlashProtection = 0;
 char aFileName[FILE_NAME_LENGTH];
-// uint32_t g_ret;
-// uint32_t g_length;
 
 /* Private function prototypes -----------------------------------------------*/
-void SerialDownload(void);
+int SerialDownload(void);
 void SerialUpload(void);
 
 /* Private functions ---------------------------------------------------------*/
@@ -74,7 +71,7 @@ void SerialUpload(void);
   * @param  None
   * @retval None
   */
-void SerialDownload(void)
+int SerialDownload(void)
 {
   char number[11] = {0};
   uint32_t size = 0;
@@ -91,6 +88,7 @@ void SerialDownload(void)
     Serial_PutString(number);
     Serial_PutString(" Bytes\r\n");
     Serial_PutString("-------------------\n");
+    return 0;
   }
   else if (result == COM_LIMIT)
   {
@@ -98,16 +96,7 @@ void SerialDownload(void)
   }
   else if (result == COM_DATA)
   {
-    Serial_PutString("\n\n\rVerification failed!error code is: ");
-//       char str[11]={0};
-//       Int2Str(str, g_ret);
-//     Serial_PutString(str);
-//     Serial_PutString("    length is: ");
-// #include <string.h>
-//       memset(str, 0, sizeof(str));
-//       Int2Str(str, g_length);
-//     Serial_PutString(str);
-//     Serial_PutString("\n");
+    Serial_PutString("\n\n\rVerification failed!\n\r");
   }
   else if (result == COM_ABORT)
   {
@@ -117,6 +106,7 @@ void SerialDownload(void)
   {
     Serial_PutString("\n\rFailed to receive the file!\n\r");
   }
+  return 1;
 }
 
 /**
@@ -147,6 +137,51 @@ void SerialUpload(void)
   }
 }
 
+#if 0
+#if defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+/* Avoids the semihosting issue */
+__asm("  .global __ARM_use_no_argv\n");
+#elif defined(__GNUC__)
+/* Disables part of C/C++ runtime startup/teardown */
+void __libc_init_array (void) {}
+#endif
+
+#if defined(__CC_ARM)
+__asm void modify_stack_pointer_and_start_app(uint32_t r0_sp, uint32_t r1_pc)
+{
+    MOV SP, R0
+    BX R1
+}
+#elif defined(__GNUC__)
+void modify_stack_pointer_and_start_app(uint32_t r0_sp, uint32_t r1_pc)
+{
+    uint32_t z = 0;
+    __asm volatile (  "msr    control, %[z]   \n\t"
+                      "isb                    \n\t"
+                      "mov    sp, %[r0_sp]    \n\t"
+                      "bx     %[r1_pc]"
+                      :
+                      :   [z] "l" (z),
+                      [r0_sp] "l" (r0_sp),
+                      [r1_pc] "l" (r1_pc)
+                   );
+}
+#else
+#error "Unknown compiler!"
+#endif
+#else
+void modify_stack_pointer_and_start_app(uint32_t r0_sp, uint32_t r1_pc)
+{
+    Serial_PutString("Start program execution......\r\n\n");
+    /* execute the new program */
+    JumpAddress = *(__IO uint32_t*) r1_pc;
+    /* Jump to user application */
+    JumpToApplication = (pFunction) JumpAddress;
+    /* Initialize user application's Stack Pointer */
+    __set_MSP(*(__IO uint32_t*) r0_sp);
+    JumpToApplication();
+}
+#endif
 /**
   * @brief  Display the Main Menu on HyperTerminal
   * @param  None
@@ -154,16 +189,17 @@ void SerialUpload(void)
   */
 void Main_Menu(void)
 {
+  uint32_t tmp = *(__IO uint32_t*) (FLASH_UPGRADE_FLAG_ADDR);
+    int skip_key = 0;
   uint8_t key = 0;
-
-  Serial_PutString("\r\n======================================================================");
-  Serial_PutString("\r\n=              (C) COPYRIGHT 2015 STMicroelectronics                 =");
-  Serial_PutString("\r\n=                                                                    =");
-  Serial_PutString("\r\n=  STM32F1xx In-Application Programming Application  (Version 1.0.0) =");
-  Serial_PutString("\r\n=                                                                    =");
-  Serial_PutString("\r\n=                                   By MCD Application Team          =");
-  Serial_PutString("\r\n======================================================================");
-  Serial_PutString("\r\n\r\n");
+    _dbg_printf("enter bootloader, flash_upgrade_flag_value: %X\n", tmp);
+  if(tmp != FLASH_UPGRADE_FLAG_VALUE) {
+      modify_stack_pointer_and_start_app(APPLICATION_ADDRESS, APPLICATION_ADDRESS+4);
+      return;
+  } else {
+      skip_key = 1;
+      key = '1';
+  }
 
   /* Test if any sector of Flash memory where user application will be loaded is write protected */
   FlashProtection = FLASH_If_GetWriteProtectionStatus();
@@ -189,39 +225,37 @@ void Main_Menu(void)
 
     /* Clean the input path */
     __HAL_UART_FLUSH_DRREGISTER(&UartHandle);
-	
-    /* Receive key */
-    HAL_UART_Receive(&UartHandle, &key, 1, RX_TIMEOUT);
 
-  // uint32_t tmp = *(__IO uint32_t*) (FLASH_UPGRADE_FLAG_ADDR);
-  // if(tmp == FLASH_UPGRADE_FLAG_VALUE) {
-  //     key = '1';
-  // } else {
-  //     key = '3';
-  // }
+    if(!skip_key) {
+        /* Receive key */
+        HAL_UART_Receive(&UartHandle, &key, 1, RX_TIMEOUT);
+    }
 
     switch (key)
     {
     case '1' :
       /* Download user application in the Flash */
-      SerialDownload();
-      uint32_t tmp=0;
-      FLASH_If_Write(FLASH_UPGRADE_FLAG_ADDR, &tmp, 1);
-      HAL_NVIC_SystemReset();
-      break;
+        {
+            int ret = SerialDownload();
+            if(!ret) {
+                uint32_t tmp[FLASH_NB_32BITWORD_IN_FLASHWORD]={0};
+                HAL_FLASH_Unlock();
+                uint32_t ok = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_UPGRADE_FLAG_ADDR, (uint32_t)(tmp));
+                HAL_FLASH_Lock();
+                if(ok != HAL_OK) {
+                    _dbg_printf("write to upgrade flag failed: %d\n", ok);
+                } else {
+                    HAL_NVIC_SystemReset(); //reboot
+                }
+            }
+            break;
+        }
     case '2' :
       /* Upload user application from the Flash */
       SerialUpload();
       break;
     case '3' :
-      Serial_PutString("Start program execution......\r\n\n");
-      /* execute the new program */
-      JumpAddress = *(__IO uint32_t*) (APPLICATION_ADDRESS + 4);
-      /* Jump to user application */
-      JumpToApplication = (pFunction) JumpAddress;
-      /* Initialize user application's Stack Pointer */
-      __set_MSP(*(__IO uint32_t*) APPLICATION_ADDRESS);
-      JumpToApplication();
+        modify_stack_pointer_and_start_app(APPLICATION_ADDRESS, APPLICATION_ADDRESS -4);
       break;
     case '4' :
       if (FlashProtection != FLASHIF_PROTECTION_NONE)

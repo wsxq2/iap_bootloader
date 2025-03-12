@@ -399,10 +399,8 @@ COM_StatusTypeDef Ymodem_Receive ( uint32_t *p_size )
                     Serial_PutByte(CA);
                     Serial_PutByte(CA);
                     result = COM_DATA;
-                    // extern uint32_t g_ret;
-                    // extern uint32_t g_length;
-                    // g_ret= ret;
-                    // g_length = packet_length/4;
+
+                    _dbg_printf("%s:%d:  ret = %d, packet_length = %d\n", __func__, __LINE__, ret, packet_length);
                   }
                 }
                 packets_received ++;

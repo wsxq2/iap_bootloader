@@ -59,11 +59,14 @@
 #define CONVERTHEX_ALPHA(c) (IS_CAP_LETTER(c) ? ((c) - 'A'+10) : ((c) - 'a'+10))
 #define CONVERTHEX(c)       (IS_09(c) ? ((c) - '0') : CONVERTHEX_ALPHA(c))
 
+#define DP_TXBUFF_LEN 255
+
 /* Exported functions ------------------------------------------------------- */
 void Int2Str(char *p_str, uint32_t intnum);
 uint32_t Str2Int(uint8_t *inputstr, uint32_t *intnum);
 void Serial_PutString(char *p_string);
 HAL_StatusTypeDef Serial_PutByte(uint8_t param);
+void _dbg_printf(const char *format,...);
 
 #define UartHandle huart1
 extern UART_HandleTypeDef UartHandle;

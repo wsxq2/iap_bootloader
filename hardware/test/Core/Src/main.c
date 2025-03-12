@@ -22,7 +22,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "menu.h"
-#include "common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,6 +93,7 @@ int main(void)
 
   /* Initialise Flash */
   FLASH_If_Init();
+  /* Display main menu */
   Main_Menu();
 
   /* USER CODE END 2 */
