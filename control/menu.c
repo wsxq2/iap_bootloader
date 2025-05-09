@@ -238,6 +238,7 @@ void Main_Menu(void)
     case '1' :
       /* Download user application in the Flash */
         {
+          #ifdef YS_BOARD
             int ret = SerialDownload();
             if(!ret) {
                 uint32_t tmp[FLASH_NB_32BITWORD_IN_FLASHWORD]={0};
@@ -250,6 +251,7 @@ void Main_Menu(void)
                     HAL_NVIC_SystemReset(); //reboot
                 }
             }
+          #endif
             break;
         }
     case '2' :

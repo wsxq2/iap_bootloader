@@ -25,3 +25,4 @@ hardware/*/Core/*
 hardware/*/Core/Src/*
 !hardware/*/Core/Src/main.c
 !hardware/*/Core/Src/system_stm32f1xx.c
+.cache/

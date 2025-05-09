@@ -232,7 +232,7 @@ uint32_t FLASH_If_GetWriteProtectionStatus(void)
 #else
   ProtectedPAGE = ~(OptionsBytesStruct.WRPPage) & FLASH_PAGE_TO_BE_PROTECTED;
 #endif
-  _dbg_printf("%s:%d:  WRPSector=%X, ProtectedPAGE=%X\n", __func__, __LINE__, OptionsBytesStruct.WRPSector, ProtectedPAGE);
+  //_dbg_printf("%s:%d:  WRPSector=%X, ProtectedPAGE=%X\n", __func__, __LINE__, OptionsBytesStruct.WRPSector, ProtectedPAGE);
 
   /* Check if desired pages are already write protected ***********************/
   if(ProtectedPAGE != 0)
@@ -280,7 +280,7 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
 #else
   ProtectedPAGE = config_old.WRPPage | FLASH_PAGE_TO_BE_PROTECTED;
 #endif
-  _dbg_printf("%s:%d:  WRPSector=%X, ProtectedPAGE=%X\n", __func__, __LINE__, config_old.WRPSector, ProtectedPAGE);
+  //_dbg_printf("%s:%d:  WRPSector=%X, ProtectedPAGE=%X\n", __func__, __LINE__, config_old.WRPSector, ProtectedPAGE);
 
   /* Unlock the Flash to enable the flash control register access *************/ 
   HAL_FLASH_Unlock();
