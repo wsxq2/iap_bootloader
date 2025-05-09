@@ -1,3 +1,3 @@
 {
-    "cmake.sourceDirectory": "${workspaceFolder}/hardware/test",
+    "cmake.sourceDirectory": "${workspaceFolder}/hardware/ys",
 }
