@@ -198,7 +198,7 @@ void _dbg_printf(const char *format,...)
 
     length = (length>DP_TXBUFF_LEN? DP_TXBUFF_LEN:length);
 
-    HAL_UART_Transmit(&huart1, (const uint8_t*)_dbg_tx_buff,length, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&UartHandle, (const uint8_t*)_dbg_tx_buff,length, HAL_MAX_DELAY);
 }
 /**
   * @}
